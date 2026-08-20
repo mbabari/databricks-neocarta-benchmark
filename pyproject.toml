@@ -1,0 +1,30 @@
+[project]
+name = "databricks-neocarta-benchmark"
+version = "0.1.0"
+description = "WITH vs WITHOUT Neo4j/Neocarta semantic-layer benchmark for Text2SQL over a complex Databricks Unity Catalog lakehouse."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "neocarta[databricks,mcp,cli]",
+    "python-dotenv>=1.2.2",
+    "langchain>=1.3.4",
+    "langchain-litellm>=0.6.6",
+    "langchain-mcp-adapters>=0.2.2",
+    "langchain-openai>=1.2.2",
+    "langgraph>=1.2.4",
+    "litellm>=1.70.0",
+    "tiktoken>=0.9.0",
+    "pyyaml>=6.0.2",
+    "azure-identity>=1.19.0",
+]
+
+[tool.uv.sources]
+# DatabricksSchemaConnector shipped on GitHub main (changelog v0.8.1) and is not
+# on PyPI 0.8.0 yet. Switch to "neocarta[databricks,mcp,cli]>=0.8.1" when published.
+neocarta = { git = "https://github.com/neo4j-labs/neocarta.git" }
+
+[dependency-groups]
+dev = [
+    "matplotlib>=3.11.1",
+    "sentence-transformers>=6.0.0",
+]

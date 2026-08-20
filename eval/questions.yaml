@@ -1,0 +1,166 @@
+questions:
+  - id: q1
+    prompt: >
+      Which customers currently have an active paid subscription AND an open
+      critical (P1) support ticket?
+    expected_tables:
+      - dm_agg_10.a_1004
+    accepted_join:
+      - ods_crm_01.t_0140
+      - ods_svc_03.t_0320
+    expected_answer:
+      - 'bob chen'
+      - 'eve rossi'
+    notes: >
+      Bob Chen and Eve Rossi. a_1004 is the governed intersection
+      (subscriber_p1_incidents); a join of subscriptions (t_0140) and tickets
+      (t_0320) is also acceptable.
+
+  - id: q2
+    prompt: >
+      What was annual recurring revenue (ARR) by product for EMEA in 2024?
+    expected_tables:
+      - dm_fin_20.f_2001
+    expected_answer:
+      - 'platform enterprise'
+      - '324000'
+    notes: >
+      f_2001 = arr_by_product_region_year. Platform Enterprise EMEA 2024 =
+      324000 USD.
+
+  - id: q3
+    prompt: >
+      Which churned customers still have unpaid invoices?
+    expected_tables:
+      - dm_agg_10.a_1006
+      - dm_fin_20.f_2002
+    accepted_any:
+      - dm_agg_10.a_1006
+      - dm_fin_20.f_2002
+      - dm_fin_20.f_2004
+    expected_answer:
+      - 'carol diaz'
+      - 'frank liu'
+    notes: >
+      Carol Diaz and Frank Liu. a_1006 = churned_customers, f_2002 =
+      unpaid_invoices, f_2004 = dunning_queue.
+
+  - id: q4
+    prompt: >
+      Rank products by 2024 EMEA bookings.
+    expected_tables:
+      - dm_agg_10.a_1005
+    expected_answer:
+      - 'platform enterprise'
+      - '48000'
+    notes: >
+      a_1005 = bookings_by_product_region_year. Platform Enterprise 48000,
+      Analytics Pro 6000. Landing shards x_ord_2024 / x_ord_emea / archive
+      snapshots are distractors.
+
+  - id: q5
+    prompt: >
+      What was the average customer satisfaction (CSAT) score for support
+      tickets closed in calendar year 2023?
+    expected_tables:
+      - ods_svc_03.t_0320
+    expected_answer:
+      - '\b4(\.0+)?(?!\.?\d)'
+    notes: >
+      t_0320 = cleaned support tickets. Tickets 404 and 405 (avg 4.0);
+      lnd_svc_raw.x_tkt_2023 is the distractor — only the cleaned tickets
+      table carries the CSAT score.
+
+  - id: q6
+    prompt: >
+      What was net revenue retention (NRR) for the EMEA region in December 2024?
+    expected_tables:
+      - dm_agg_10.a_1007
+    expected_answer:
+      - '1\.08|108\s?%|108 percent'
+    notes: >
+      "Net revenue retention" only maps to dm_agg_10.a_1007 (nrr_monthly) via
+      its description — nothing is literally named nrr. EMEA 2024-12 = 1.08
+      (108%), AMER = 0.97.
+
+  - id: q7
+    prompt: >
+      Which unpaid invoices are currently in the collections (dunning) queue,
+      and how many collection attempts have been made on each?
+    expected_tables:
+      - dm_fin_20.f_2004
+    accepted_any:
+      - dm_fin_20.f_2004
+      - dm_fin_20.f_2002
+    expected_answer:
+      - '9001'
+      - '9002'
+    notes: >
+      "Dunning / collections" resolves to dm_fin_20.f_2004 (dunning_queue)
+      only through the description. Invoice 9001 (Carol Diaz) attempt 3,
+      invoice 9002 (Frank Liu) attempt 2.
+
+  - id: q8
+    prompt: >
+      How much revenue was recognized (recognized revenue, not ARR or bookings)
+      in EMEA in December 2024?
+    expected_tables:
+      - dm_fin_20.f_2003
+    expected_answer:
+      - '27000'
+    notes: >
+      f_2003 = revenue_recognition. Decoys are f_2005 (arr_monthly) and a_1005
+      (bookings). EMEA 2024-12 recognized = 27000 USD.
+
+  - id: q9
+    prompt: >
+      What was the month-end ARR snapshot for each region as of December 2024?
+    expected_tables:
+      - dm_fin_20.f_2005
+    expected_answer:
+      - '324000'
+      - '54000'
+    notes: >
+      Must pick f_2005 (arr_monthly, "month-end ARR snapshot" in its
+      description) over the similarly described per-product annual table
+      f_2001. EMEA 324000, AMER 54000.
+
+  - id: q10
+    prompt: >
+      Our customer success team needs a health check from the customer 360
+      view: list every currently active enterprise-segment customer in EMEA
+      together with their open critical (P1) ticket count — include customers
+      with zero open P1 tickets.
+    expected_tables:
+      - dm_agg_10.a_1001
+    expected_answer:
+      - 'alice martin'
+      - 'eve rossi'
+    notes: >
+      "Customer 360" is the business term for dm_agg_10.a_1001; the wide
+      governed dimension already has segment, region, status and opn_p1_tkt.
+      Alice Martin (0 P1) and Eve Rossi (1 P1); Carol Diaz is churned and
+      excluded. "Include zeros" makes the expected answer unambiguous (a model
+      that lists only ticket-holders would omit Alice) and rules out
+      a_1004, which only contains customers WITH open P1 incidents.
+
+  - id: q11
+    prompt: >
+      Which customers are currently paying subscribers (excluding trials and
+      churned accounts), and what plan and monthly recurring revenue (MRR) is
+      each on?
+    expected_tables:
+      - dm_agg_10.a_1002
+    accepted_join:
+      - ods_crm_01.t_0140
+      - ods_crm_01.t_0100
+    expected_answer:
+      - 'alice martin'
+      - 'bob chen'
+      - 'dan okonkwo'
+      - 'eve rossi'
+      - 'hiro tanaka'
+    notes: >
+      a_1002 = subscriber_health ("current paying subscribers, excludes trial
+      and churned"). Alice 12000 (platform), Bob 4500 (analytics), Dan 900
+      (support_plus), Eve 15000 (platform), Hiro 6000 (analytics).

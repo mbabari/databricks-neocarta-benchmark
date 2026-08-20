@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+
+# uv
+.uv/
+
+# Environment & secrets — never commit
+.env
+.env.*
+!.env.example
+
+# Local IDE / agent tooling
+.claude/
+.cursor/
+.vscode/
+
+# OS
+.DS_Store
+
+# Logs & scratch
+/tmp/
+*.stderr.log
+*.out
+*.err
+eval/results.json
+eval/results-*.json
