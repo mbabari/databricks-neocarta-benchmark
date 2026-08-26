@@ -27,7 +27,3 @@ __pycache__/
 *.err
 eval/results.json
 eval/results-*.json
-
-# Draft / internal-only — do not publish to the public repo
-docs/medium_article.md
-neocarta-vs-ontobricks.pdf
