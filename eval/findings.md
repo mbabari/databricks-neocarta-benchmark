@@ -157,7 +157,7 @@ Note the two rows the 2026-08-20 run improved: opus-4.5 went 9/11 → 11/11
 WITH the layer once q10/q11 were fixed, and the GPT models (which needed
 OpenAI) are replaced by the broader Anthropic set above.
 
-### The talking points (earlier run)
+### Key findings 
 
 1. **Weak/cheap models are unusable without the layer and excellent with it.**
   gpt-4o-mini got 0/11 correct answers without the semantic layer (half the
@@ -176,7 +176,7 @@ OpenAI) are replaced by the broader Anthropic set above.
 
 
 
-## Why a naive agent struggles (show on screen)
+## Why a naive agent struggles 
 
 - Nothing is named what the business calls it: ARR lives in `dm_fin_20.f_2001`,
 customer 360 in `dm_agg_10.a_1001`, dunning in `dm_fin_20.f_2004`.
