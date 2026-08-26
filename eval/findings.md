@@ -35,15 +35,11 @@ the retrieved physical names — it is not a Neo4j procedure.
 ANSWERS = the final answer contained the ground-truth values
 (deterministic regex check in `eval/questions.yaml`).
 
-
-
-## Latest sweep — 2026-08-20, 8 Anthropic models, fixed questions (11/11)
+## Latest sweep
 
 The token and cost charts at the top of this page, and this section, are the current headline result:
 **8 models × 11 questions × 2 modes**
 (`eval/results-8models-anthropic.json`). Two changes vs the earlier run:
-
-
 
 1. **Embeddings run locally** (`src/local_embeddings.py`,
   `all-mpnet-base-v2`, 768-dim) — no OpenAI dependency. This is why the GPT
@@ -65,7 +61,7 @@ The token and cost charts at the top of this page, and this section, are the cur
 
 ![Cost per question](../docs/benchmark_cost.png)
 
-Takeaways:
+### Key findings
 
 - **Every model reaches 11/11 correct answers WITH the semantic layer.** Haiku
 4.5 improves from 10/11 → 11/11 *because* of the layer.
@@ -79,8 +75,20 @@ Opus 4.5 drops from ~$0.1527/q without the layer to ~$0.0693/q with it
 (~$1,527/mo vs ~$693/mo at 10,000 queries). The same ~54% token cut on
 cheaper Haiku 4.5 is only ~$0.0327 → ~$0.0143 per question (~$327 vs
 ~$143/mo).
-
-
+- **Weak/cheap models are unusable without the layer and excellent with it.**
+gpt-4o-mini got 0/11 correct answers without the semantic layer (half the runs
+hit the step limit while paging through `x_feed_*` extracts) but 8/11 with it —
+at 73% fewer tokens and 5× faster.
+- **Strong models pay a brute-force tax.** Opus and Sonnet do eventually find
+the right tables — by running LIKE queries over hundreds of
+`information_schema` comments — but burn ~2× the tokens and ~2× the wall-clock
+time doing it, every single question, forever.
+- **Cheap is not correct.** gpt-4o without the layer is frugal (9k tokens) but
+only answers 4/11 correctly; with the layer it reaches 9/11 at 15% fewer
+tokens. The savings story and the accuracy story are the same story: retrieval
+replaces guessing.
+- **One retrieval, done.** With the layer every model converges to the same
+pattern: one hybrid-search call, one SQL call. Without it, 8–57 tool calls.
 
 ## Databricks Unity Catalog semantics vs Neo4j SL
 
@@ -95,19 +103,6 @@ preference: you cannot point UC SL at the whole catalog. The 13 governed
 marts (`dm_agg_10` + `dm_fin_20`) plus the 18 ODS tables already total **31**
 — so even “gold + silver only, drop every landing/archive/decoy table” does
 not fit. The 191 landing/decoy tables are out of scope by construction.
-
-
-|                                                 | Unity Catalog semantics (Metric Views + Genie)                                         | Neo4j SL (this demo)                                                    |
-| ----------------------------------------------- | -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| Job                                             | Certify KPI formulas and chat over a **pre-chosen** subset                             | **Find** the right table in a large, messy catalog                      |
-| How tables get in                               | You pick them in the UI (max **30** here)                                              | Connector ingests `information_schema` (264 tables, 5,614 columns)      |
-| How meaning is used                             | Synonyms / display names you type on a Metric View; Genie instructions and example SQL | Hybrid search over COMMENT embeddings + full-text + FK `REFERENCES`     |
-| Scale on this lakehouse                         | 30 / 264 tables (~11%). Must omit ODS or marts or both                                 | All 12 schemas; one retrieval call ranks `a_1007` for “NRR”             |
-| Opaque names (`f_2001`, `t_0320`)               | Work only if that table is in the 30 and you documented it                             | Work because COMMENT is indexed, not the physical name                  |
-| Homonyms (`hcm_ods` tickets vs support tickets) | You exclude the trap by not selecting it                                               | Retrieval ranks the COMMENT that matches the question                   |
-| Certified ARR / NRR formula                     | **Stronger** — Metric View is the same SQL for every dashboard                         | Weaker — the LLM still writes the SELECT (it just hits the right table) |
-| Extra system                                    | None (inside UC)                                                                       | Neo4j graph next to the warehouse                                       |
-
 
 **When to use Databricks UC semantics**
 
@@ -126,66 +121,21 @@ the right 30 tables without already knowing the answer.
 make “just pick gold” fail — you still have to *find* gold.
 - Text2SQL agents that would otherwise scan `information_schema` (the
 WITHOUT baseline in this repo).
+- The Neo4j / Neocarta layer is **warehouse-polyglot** — the same connector pattern ingests metadata from **BigQuery, Snowflake, Databricks (Unity Catalog), generic JDBC, GCP Dataplex, CSV, and query-log JSON** into one graph. This demo uses `DatabricksSchemaConnector`; swapping the source is a connector change, not a rewrite of the agent, the graph, or the MCP tools.
 
-They stack: Neo4j retrieves `dm_fin_20.f_2001`; a UC Metric View on that
-table can still own the ARR formula. UC SL does not replace retrieval on a
-264-table legacy catalog, and the 30-table cap is why.
+
+
+This is not hypothetical: the companion
+[Census ACS BigQuery benchmark](https://github.com/mbabari/census-neocarta-benchmark)
+runs the *identical* recipe against **BigQuery** (278 near-identical public
+tables), swapping only the connector. Same semantic layer, same MCP tools,
+different warehouse — evidence that the approach is source-agnostic.
+
+> Rule of thumb: reach for Neo4j when the answer lives in **more than one place**.
+> Unity Catalog governs one estate well; the graph is what lets a single agent
+> reason across all of them.
 
 ---
-
-
-
-## Earlier sweep — 2026-08-19, 5 models (OpenAI embeddings)
-
-Numbers below are from the sweep of 2026-08-19
-(`eval/results-5models-openai-embeddings.json`), 5 models × 11 questions ×
-2 modes, before the q10/q11 fixes and using OpenAI `text-embedding-3-small`.
-
-### Headline result (average per question, 11 questions)
-
-
-| Model             | tok w/o SL | tok with SL | SAVING  | time w/o | time with | answers w/o | answers with |
-| ----------------- | ---------- | ----------- | ------- | -------- | --------- | ----------- | ------------ |
-| gpt-4o-mini       | 47,736     | 13,103      | **73%** | 39.4s    | 7.5s      | 0/11        | 8/11         |
-| gpt-4o            | 9,141      | 7,770       | **15%** | 13.1s    | 15.4s     | 4/11        | 9/11         |
-| claude-haiku-4.5  | 35,919     | 12,998      | **64%** | 22.5s    | 7.0s      | 9/11        | 10/11        |
-| claude-sonnet-4.5 | 21,891     | 12,328      | **44%** | 28.2s    | 12.3s     | 11/11       | 11/11        |
-| claude-opus-4.5   | 24,067     | 15,079      | **37%** | 26.1s    | 18.0s     | 11/11       | 9/11         |
-
-
-Note the two rows the 2026-08-20 run improved: opus-4.5 went 9/11 → 11/11
-WITH the layer once q10/q11 were fixed, and the GPT models (which needed
-OpenAI) are replaced by the broader Anthropic set above.
-
-### Key findings 
-
-1. **Weak/cheap models are unusable without the layer and excellent with it.**
-  gpt-4o-mini got 0/11 correct answers without the semantic layer (half the
-   runs hit the step limit while paging through `x_feed_*` extracts) but 8/11
-   with it — at 73% fewer tokens and 5× faster.
-2. **Strong models pay a brute-force tax.** Opus and Sonnet do eventually
-  find the right tables — by running LIKE queries over hundreds of
-   `information_schema` comments — but burn ~2× the tokens and ~2× the
-   wall-clock time doing it, every single question, forever.
-3. **Cheap is not correct.** gpt-4o without the layer is frugal (9k tokens)
-  but only answers 4/11 correctly; with the layer it reaches 9/11 at 15%
-   fewer tokens. The savings story and the accuracy story are the same story:
-   retrieval replaces guessing.
-4. **One retrieval, done.** With the layer every model converges to the same
-  pattern: one hybrid-search call, one SQL call. Without it, 8–57 tool calls.
-
-
-
-## Why a naive agent struggles 
-
-- Nothing is named what the business calls it: ARR lives in `dm_fin_20.f_2001`,
-customer 360 in `dm_agg_10.a_1001`, dunning in `dm_fin_20.f_2004`.
-- Six different `x_cst*` customer copies in the landing zone, plus archive
-snapshots, staging, marketing audiences and HR homonyms.
-- 110 wide `x_feed_*` extracts with unlabelled `fld_001..fld_024` columns —
-pure exploration cost.
-- "Net revenue retention", "collections queue", "recognized revenue" only
-resolve through COMMENT text — which is exactly what the embeddings index.
 
 
 
@@ -199,8 +149,6 @@ answers (regex-checked). Examples:
 2. 2024 EMEA ARR by product → `dm_fin_20.f_2001` (Platform Enterprise 324,000)
 3. Net revenue retention EMEA Dec 2024 → `dm_agg_10.a_1007` (1.08)
 4. Collections/dunning queue attempts → `dm_fin_20.f_2004` (9001×3, 9002×2)
-
-
 
 ## Reproduce
 
