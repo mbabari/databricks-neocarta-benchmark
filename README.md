@@ -29,7 +29,19 @@ Two tools, not a Cypher chatbot:
 1. `get_context_by_table_hybrid_search` — vector ∪ full-text on Table `COMMENT`, then Cypher expansion of columns and FK `REFERENCES`.
 2. `execute_sql` — Databricks SQL warehouse. Text2SQL is the LLM writing SQL from the retrieved **physical** names.
 
+The layer in the Neo4j Browser — `dm_agg_10` → tables (`a_1001`, `a_1002`, `a_1004`) → columns → sample values, with `REFERENCES` edges linking `cst_id` (the join paths the agent follows):
+
+![The semantic layer in the Neo4j Browser](docs/graph_browser.png)
+
 Without the layer the agent brute-forces `list_schemas` / `list_tables` / `get_table_columns` and `information_schema` (4–24 tool calls, often more).
+
+### What the warehouse actually sees
+
+One question ("NRR for EMEA in December 2024?"), same model, same final SQL, same answer — captured live with [`src/capture_query_log.py`](src/capture_query_log.py):
+
+![Databricks query history, without vs with the semantic layer](docs/query_history_compare.png)
+
+WITHOUT the layer, Databricks fields **18 round-trips** — 17 `information_schema` scans probing opaque tables (`f_2001`, `a_1001`, …) to find where "NRR" lives — then the real query. WITH it, retrieval runs in Neo4j over MCP (never touches the warehouse), so Databricks sees **one** business query, at half the tokens. Regenerate with `uv run python src/capture_query_log.py --qid q6 --model <id>`.
 
 ## Results
 
@@ -94,6 +106,7 @@ src/build_semantic_layer.py # Neocarta ingest + embeddings → Neo4j
 src/benchmark.py            # models × questions × with/without
 src/agent.py                # interactive agent
 src/runtime.py              # tools, prompts, scoring
+src/capture_query_log.py    # logs warehouse SQL per mode → docs/query_log.json
 src/make_diagrams.py        # docs/*.png
 eval/questions.yaml         # 11 questions, expected tables and answers
 eval/findings.md            # results, UC vs Neo4j, talking points

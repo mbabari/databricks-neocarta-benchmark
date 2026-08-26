@@ -1,0 +1,196 @@
+{
+  "qid": "q6",
+  "question": "What was net revenue retention (NRR) for the EMEA region in December 2024?",
+  "catalog": "neo4j_semantic_layer_benchmark",
+  "runs": {
+    "without": {
+      "mode": "without",
+      "model": "anthropic/claude-haiku-4-5-20251001",
+      "finished": true,
+      "tool_calls": [
+        "list_schemas",
+        "list_tables",
+        "list_tables",
+        "list_tables",
+        "list_tables",
+        "get_table_columns",
+        "get_table_columns",
+        "get_table_columns",
+        "get_table_columns",
+        "get_table_columns",
+        "get_table_columns",
+        "get_table_columns",
+        "get_table_columns",
+        "get_table_columns",
+        "get_table_columns",
+        "get_table_columns",
+        "get_table_columns",
+        "execute_sql"
+      ],
+      "n_tool_calls": 18,
+      "warehouse_queries": [
+        {
+          "n": 1,
+          "kind": "catalog",
+          "sql": "SELECT schema_name FROM `neo4j_semantic_layer_benchmark`.information_schema.schemata ORDER BY schema_name",
+          "ms": 2200,
+          "error": null
+        },
+        {
+          "n": 2,
+          "kind": "catalog",
+          "sql": "SELECT table_name FROM `neo4j_semantic_layer_benchmark`.information_schema.tables WHERE table_schema = 'lnd_sls_raw' ORDER BY table_name",
+          "ms": 1801,
+          "error": null
+        },
+        {
+          "n": 3,
+          "kind": "catalog",
+          "sql": "SELECT table_name FROM `neo4j_semantic_layer_benchmark`.information_schema.tables WHERE table_schema = 'dm_fin_20' ORDER BY table_name",
+          "ms": 1944,
+          "error": null
+        },
+        {
+          "n": 4,
+          "kind": "catalog",
+          "sql": "SELECT table_name FROM `neo4j_semantic_layer_benchmark`.information_schema.tables WHERE table_schema = 'lnd_fin_raw' ORDER BY table_name",
+          "ms": 1828,
+          "error": null
+        },
+        {
+          "n": 5,
+          "kind": "catalog",
+          "sql": "SELECT table_name FROM `neo4j_semantic_layer_benchmark`.information_schema.tables WHERE table_schema = 'dm_agg_10' ORDER BY table_name",
+          "ms": 1867,
+          "error": null
+        },
+        {
+          "n": 6,
+          "kind": "catalog",
+          "sql": "SELECT column_name, full_data_type FROM `neo4j_semantic_layer_benchmark`.information_schema.columns WHERE table_schema = 'dm_fin_20' AND table_name = 'f_2003' ORDER BY ordinal_position",
+          "ms": 1503,
+          "error": null
+        },
+        {
+          "n": 7,
+          "kind": "catalog",
+          "sql": "SELECT column_name, full_data_type FROM `neo4j_semantic_layer_benchmark`.information_schema.columns WHERE table_schema = 'dm_fin_20' AND table_name = 'f_2001' ORDER BY ordinal_position",
+          "ms": 1523,
+          "error": null
+        },
+        {
+          "n": 8,
+          "kind": "catalog",
+          "sql": "SELECT column_name, full_data_type FROM `neo4j_semantic_layer_benchmark`.information_schema.columns WHERE table_schema = 'dm_agg_10' AND table_name = 'a_1001' ORDER BY ordinal_position",
+          "ms": 1574,
+          "error": null
+        },
+        {
+          "n": 9,
+          "kind": "catalog",
+          "sql": "SELECT column_name, full_data_type FROM `neo4j_semantic_layer_benchmark`.information_schema.columns WHERE table_schema = 'dm_agg_10' AND table_name = 'a_1005' ORDER BY ordinal_position",
+          "ms": 1576,
+          "error": null
+        },
+        {
+          "n": 10,
+          "kind": "catalog",
+          "sql": "SELECT column_name, full_data_type FROM `neo4j_semantic_layer_benchmark`.information_schema.columns WHERE table_schema = 'dm_fin_20' AND table_name = 'f_2005' ORDER BY ordinal_position",
+          "ms": 1153,
+          "error": null
+        },
+        {
+          "n": 11,
+          "kind": "catalog",
+          "sql": "SELECT column_name, full_data_type FROM `neo4j_semantic_layer_benchmark`.information_schema.columns WHERE table_schema = 'dm_fin_20' AND table_name = 'f_2004' ORDER BY ordinal_position",
+          "ms": 1310,
+          "error": null
+        },
+        {
+          "n": 12,
+          "kind": "catalog",
+          "sql": "SELECT column_name, full_data_type FROM `neo4j_semantic_layer_benchmark`.information_schema.columns WHERE table_schema = 'dm_fin_20' AND table_name = 'f_2002' ORDER BY ordinal_position",
+          "ms": 1361,
+          "error": null
+        },
+        {
+          "n": 13,
+          "kind": "catalog",
+          "sql": "SELECT column_name, full_data_type FROM `neo4j_semantic_layer_benchmark`.information_schema.columns WHERE table_schema = 'dm_agg_10' AND table_name = 'a_1002' ORDER BY ordinal_position",
+          "ms": 1498,
+          "error": null
+        },
+        {
+          "n": 14,
+          "kind": "catalog",
+          "sql": "SELECT column_name, full_data_type FROM `neo4j_semantic_layer_benchmark`.information_schema.columns WHERE table_schema = 'dm_agg_10' AND table_name = 'a_1004' ORDER BY ordinal_position",
+          "ms": 1331,
+          "error": null
+        },
+        {
+          "n": 15,
+          "kind": "catalog",
+          "sql": "SELECT column_name, full_data_type FROM `neo4j_semantic_layer_benchmark`.information_schema.columns WHERE table_schema = 'dm_agg_10' AND table_name = 'a_1007' ORDER BY ordinal_position",
+          "ms": 1341,
+          "error": null
+        },
+        {
+          "n": 16,
+          "kind": "catalog",
+          "sql": "SELECT column_name, full_data_type FROM `neo4j_semantic_layer_benchmark`.information_schema.columns WHERE table_schema = 'dm_agg_10' AND table_name = 'a_1003' ORDER BY ordinal_position",
+          "ms": 1428,
+          "error": null
+        },
+        {
+          "n": 17,
+          "kind": "catalog",
+          "sql": "SELECT column_name, full_data_type FROM `neo4j_semantic_layer_benchmark`.information_schema.columns WHERE table_schema = 'dm_agg_10' AND table_name = 'a_1006' ORDER BY ordinal_position",
+          "ms": 1685,
+          "error": null
+        },
+        {
+          "n": 18,
+          "kind": "business",
+          "sql": "SELECT mo, rgn, nrr_pct FROM neo4j_semantic_layer_benchmark.dm_agg_10.a_1007 WHERE rgn = 'EMEA' AND mo = '2024-12-01'",
+          "ms": 4683,
+          "error": null
+        }
+      ],
+      "n_warehouse_queries": 18,
+      "n_catalog_queries": 17,
+      "n_business_queries": 1,
+      "tokens_in": 21714,
+      "tokens_out": 1386,
+      "tokens_total": 23100,
+      "cost": 0.02864,
+      "answer": "**Net Revenue Retention (NRR) for EMEA in December 2024: 108%**\n\nThe EMEA region achieved an NRR of 1.08 (or 108%) in December 2024, indicating strong revenue growth from existing customers with expansion revenue exceeding churn."
+    },
+    "with": {
+      "mode": "with",
+      "model": "anthropic/claude-haiku-4-5-20251001",
+      "finished": true,
+      "tool_calls": [
+        "get_context_by_table_hybrid_search",
+        "execute_sql"
+      ],
+      "n_tool_calls": 2,
+      "warehouse_queries": [
+        {
+          "n": 1,
+          "kind": "business",
+          "sql": "SELECT mo, rgn, nrr_pct FROM neo4j_semantic_layer_benchmark.dm_agg_10.a_1007 WHERE rgn = 'EMEA' AND mo = '2024-12-01'",
+          "ms": 672,
+          "error": null
+        }
+      ],
+      "n_warehouse_queries": 1,
+      "n_catalog_queries": 0,
+      "n_business_queries": 1,
+      "tokens_in": 11038,
+      "tokens_out": 384,
+      "tokens_total": 11422,
+      "cost": 0.01296,
+      "answer": "**Net Revenue Retention (NRR) for EMEA in December 2024: 1.08 (or 108%)**\n\nThis indicates that the EMEA region achieved 108% net revenue retention in December 2024, meaning the region retained all existing revenue and grew it by an additional 8% through expansion and upsells."
+    }
+  }
+}

@@ -418,12 +418,213 @@ def sl_flow() -> None:
     print(f"wrote {out}")
 
 
+def graph_model() -> None:
+    """The Neocarta semantic-layer graph: node labels, properties, relationships."""
+    fig, ax = plt.subplots(figsize=(15.4, 8.4), dpi=150)
+    ax.set_xlim(0, 15.4)
+    ax.set_ylim(0, 8.4)
+    ax.axis("off")
+
+    ink, mute = "#222222", "#555555"
+    db_c, sc_c, tb_c, co_c, va_c = "#1a5276", "#b7950b", "#7b1fa2", "#1e8449", "#c0392b"
+    db_f, sc_f, tb_f, co_f, va_f = "#eaf2f8", "#fef9e7", "#f3e5f5", "#eafaf1", "#fdecea"
+
+    cx = 7.7
+    ax.text(cx, 8.05, "Neocarta semantic-layer graph — what lives in Neo4j",
+            ha="center", fontsize=15, fontweight="bold", color=ink)
+    ax.text(cx, 7.68,
+            "Only metadata crosses into Neo4j. The rows stay in Databricks.",
+            ha="center", fontsize=10, color=mute)
+
+    # Node cards: (x, y, w, h, face, edge, title, props)
+    W = 2.55
+    nodes = [
+        (0.55, 4.35, W, 2.35, db_f, db_c, "Database",
+         ["id  · KEY", "name", "description", "embedding : VECTOR"]),
+        (4.25, 4.35, W, 2.35, sc_f, sc_c, "Schema",
+         ["id  · KEY", "name", "description", "embedding : VECTOR"]),
+        (7.95, 4.35, W, 2.35, tb_f, tb_c, "Table",
+         ["id  · KEY", "name", "description", "embedding : VECTOR"]),
+        (11.65, 3.55, 2.95, 3.15, co_f, co_c, "Column",
+         ["id  · KEY", "name", "description", "embedding : VECTOR",
+          "type", "isPrimaryKey", "isForeignKey"]),
+        (7.95, 0.65, W, 1.75, va_f, va_c, "Value",
+         ["id  · KEY", "value"]),
+    ]
+    for x, y, w, h, face, edge, title, props in nodes:
+        _box(ax, x, y, w, h, face, edge, lw=1.9)
+        ax.text(x + w / 2, y + h - 0.34, title, ha="center", fontsize=12.5,
+                fontweight="bold", color=edge)
+        py = y + h - 0.78
+        for p in props:
+            ax.text(x + 0.22, py, p, fontsize=8.6, family="monospace",
+                    color=ink, va="top")
+            py -= 0.34
+
+    def edge_label(x, y, text, color):
+        ax.text(x, y, text, ha="center", va="center", fontsize=8.4,
+                fontweight="bold", color=color,
+                bbox=dict(boxstyle="round,pad=0.18", fc="white", ec=color, lw=1.0))
+
+    # Database -HAS_SCHEMA-> Schema
+    _arrow(ax, 3.10, 5.525, 4.25, 5.525, db_c)
+    edge_label(3.675, 5.525, "HAS_SCHEMA", db_c)
+    # Schema -HAS_TABLE-> Table
+    _arrow(ax, 6.80, 5.525, 7.95, 5.525, sc_c)
+    edge_label(7.375, 5.525, "HAS_TABLE", sc_c)
+    # Table -HAS_COLUMN-> Column
+    _arrow(ax, 10.50, 5.525, 11.65, 5.525, tb_c)
+    edge_label(11.075, 5.525, "HAS_COLUMN", tb_c)
+    # Column -REFERENCES-> Column (self loop, foreign keys)
+    ax.annotate("", xy=(13.85, 6.70), xytext=(12.60, 6.70),
+                arrowprops=dict(arrowstyle="-|>", color=co_c, lw=1.6,
+                                connectionstyle="arc3,rad=-1.4"))
+    ax.text(13.225, 7.52, "REFERENCES", ha="center", fontsize=8.4,
+            fontweight="bold", color=co_c,
+            bbox=dict(boxstyle="round,pad=0.18", fc="white", ec=co_c, lw=1.0))
+    ax.text(13.225, 7.14, "(foreign keys → joins)", ha="center", fontsize=7.6,
+            color=mute)
+    # Column -HAS_VALUE-> Value
+    ax.annotate("", xy=(9.70, 2.40), xytext=(12.30, 3.55),
+                arrowprops=dict(arrowstyle="-|>", color=va_c, lw=1.6,
+                                connectionstyle="arc3,rad=0.25"))
+    edge_label(11.35, 2.78, "HAS_VALUE", va_c)
+
+    ax.text(cx, 0.28,
+            "Embeddings are generated from each description (COMMENT). "
+            "Hybrid search ranks Table/Column, then the agent follows REFERENCES to build joins.",
+            ha="center", fontsize=8.8, color=mute, style="italic")
+
+    DOCS.mkdir(exist_ok=True)
+    out = DOCS / "graph_model.png"
+    fig.savefig(out, bbox_inches="tight", facecolor="white")
+    plt.close(fig)
+    print(f"wrote {out}")
+
+
+def _summarize_sql(sql: str, catalog: str = "") -> tuple[str, str]:
+    """Return (short tag, target) for one captured statement."""
+    import re
+
+    low = sql.lower()
+    if "information_schema.schemata" in low:
+        return "scan", "information_schema.schemata  (list all schemas)"
+    if "information_schema.tables" in low:
+        m = re.search(r"table_schema\s*=\s*'([^']+)'", sql)
+        sch = m.group(1) if m else "?"
+        return "scan", f"information_schema.tables · {sch}"
+    if "information_schema.columns" in low:
+        m = re.search(r"table_schema\s*=\s*'([^']+)'\s*AND\s*table_name\s*=\s*'([^']+)'", sql)
+        tgt = f"{m.group(1)}.{m.group(2)}" if m else "?"
+        return "scan", f"information_schema.columns · {tgt}"
+    compact = " ".join(sql.split())
+    if catalog:  # drop the long catalog prefix so schema.table stays readable
+        compact = compact.replace(f"`{catalog}`.", "").replace(f"{catalog}.", "")
+    compact = compact.replace(" = ", "=")
+    if len(compact) > 50:
+        compact = compact[:47] + "…"
+    return "QUERY", compact
+
+
+def query_history_compare(path: Path | None = None) -> None:
+    """Side-by-side Databricks query history for one question: WITHOUT vs WITH."""
+    path = path or (DOCS / "query_log.json")
+    data = json.loads(path.read_text(encoding="utf-8"))
+    wo, wi = data["runs"]["without"], data["runs"]["with"]
+
+    red, redf = "#c0392b", "#fdecea"
+    neo, neof = "#1e8449", "#eafaf1"
+    ink, mute, grey = "#222222", "#666666", "#8a8a8a"
+
+    fig, ax = plt.subplots(figsize=(16.4, 9.8), dpi=150)
+    ax.set_xlim(0, 16.4)
+    ax.set_ylim(0, 9.8)
+    ax.axis("off")
+
+    ax.text(8.2, 9.48, "One question, two runs — what the Databricks warehouse actually sees",
+            ha="center", fontsize=16, fontweight="bold", color=ink)
+    ax.text(8.2, 9.14, f'“{data["question"]}”   ·   same model, same final SQL, same answer (108%)',
+            ha="center", fontsize=10.5, color=mute, style="italic")
+
+    def panel(x0, w, run, color, facef, title, subtitle, extra_rows=None):
+        _box(ax, x0, 0.45, w, 8.30, facef, color, lw=2.0)
+        ax.text(x0 + 0.28, 8.42, title, fontsize=13.5, fontweight="bold", color=color)
+        ax.text(x0 + 0.28, 8.13, subtitle, fontsize=9.2, color=mute)
+        # stats line
+        stats = (f'{run["n_warehouse_queries"]} warehouse '
+                 f'{"queries" if run["n_warehouse_queries"] != 1 else "query"}   ·   '
+                 f'{run["n_tool_calls"]} tool calls   ·   '
+                 f'{run["tokens_total"]:,} tokens   ·   ${run["cost"]:.4f}')
+        ax.text(x0 + 0.28, 7.80, stats, fontsize=9.4, fontweight="bold", color=color)
+        ax.text(x0 + 0.30, 7.47, "#", fontsize=8, fontweight="bold", color=grey)
+        ax.text(x0 + 0.72, 7.47, "warehouse round-trip", fontsize=8, fontweight="bold", color=grey)
+        ax.text(x0 + w - 0.30, 7.47, "time", fontsize=8, fontweight="bold", color=grey, ha="right")
+        _arrow(ax, x0 + 0.30, 7.34, x0 + w - 0.30, 7.34, "#cccccc")
+        y, dy = 7.08, 0.345
+        for note in extra_rows or []:
+            ax.text(x0 + 0.72, y, note, fontsize=8.2, family="monospace", color=neo,
+                    fontweight="bold", va="center")
+            y -= dy
+            ax.text(x0 + 0.72, y, "↳ runs in Neo4j over MCP — never hits the warehouse",
+                    fontsize=8.0, color=mute, style="italic", va="center")
+            y -= dy + 0.12
+        for q in run["warehouse_queries"]:
+            tag, target = _summarize_sql(q["sql"], data.get("catalog", ""))
+            is_biz = q["kind"] == "business"
+            ax.text(x0 + 0.30, y, str(q["n"]), fontsize=7.6, family="monospace", color=grey, va="center")
+            ax.text(x0 + 0.72, y, tag, fontsize=7.2, family="monospace", fontweight="bold",
+                    color="white", va="center",
+                    bbox=dict(boxstyle="round,pad=0.16", fc=(neo if is_biz else "#cd6155"), ec="none"))
+            ax.text(x0 + 1.66, y, target, fontsize=8.0, family="monospace",
+                    color=(ink if is_biz else "#7b241c"),
+                    fontweight=("bold" if is_biz else "normal"), va="center")
+            ax.text(x0 + w - 0.30, y, f'{q["ms"]:,}ms', fontsize=7.0, family="monospace",
+                    color=grey, va="center", ha="right")
+            y -= dy
+        return y
+
+    y_left = panel(
+        0.35, 7.55, wo, red, redf,
+        "WITHOUT the semantic layer",
+        "agent brute-forces Unity Catalog to find where “NRR” lives",
+    )
+    ax.text(0.72, y_left + 0.02,
+            f'↑ {wo["n_catalog_queries"]} information_schema scans just to locate one table',
+            fontsize=8.6, color=red, style="italic", va="center")
+
+    panel(
+        8.50, 7.55, wi, neo, neof,
+        "WITH the Neo4j semantic layer",
+        "one hybrid retrieval in Neo4j, then the query",
+        extra_rows=["retrieve  get_context_by_table_hybrid_search"],
+    )
+
+    fig.text(0.5, 0.008,
+             "Same question, same final SQL (dm_agg_10.a_1007), same answer — but without the "
+             "semantic layer the warehouse fields 18 round-trips to answer one question.",
+             ha="center", fontsize=9.5, color=mute, style="italic")
+
+    DOCS.mkdir(exist_ok=True)
+    out = DOCS / "query_history_compare.png"
+    fig.savefig(out, bbox_inches="tight", facecolor="white")
+    plt.close(fig)
+    print(f"wrote {out}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--results", action="store_true", help="token + cost charts only")
     parser.add_argument("--cost", action="store_true", help="cost chart only")
     parser.add_argument("--flow", action="store_true", help="question-to-answer flow only")
+    parser.add_argument("--graph", action="store_true", help="graph data model only")
+    parser.add_argument("--querylog", action="store_true", help="query-history compare only")
     args = parser.parse_args()
+    if args.querylog:
+        query_history_compare()
+        return
+    if args.graph:
+        graph_model()
+        return
     if args.flow:
         sl_flow()
         return
@@ -433,6 +634,9 @@ def main() -> None:
     if not args.results:
         catalog_map(build_lakehouse())
         sl_flow()
+        graph_model()
+        if (DOCS / "query_log.json").exists():
+            query_history_compare()
     if _eval_results_path().exists():
         results_chart()
         cost_chart()
