@@ -66,13 +66,7 @@ Scoring is deterministic: `[eval/questions.yaml](eval/questions.yaml)` has `expe
 
 An earlier 5-model run (including GPT, OpenAI embeddings) is kept in findings — gpt-4o-mini went **0/11 → 8/11** WITH the layer.
 
-## Databricks UC semantics vs Neo4j SL
-
-Unity Catalog **Metric Views + Genie** certify KPIs over a **curated** table list. In this workspace a Genie space allows **at most 30 tables**. This catalog has **264**; gold + ODS alone is **31**, so UC SL cannot see the search space this demo is built for.
-
-Details in [findings](eval/findings.md#databricks-unity-catalog-semantics-vs-neo4j-sl).
-
-### One layer, any warehouse
+## One layer, any warehouse
 
 The Neo4j / Neocarta layer is **warehouse-polyglot** — the same connector pattern ingests metadata from **BigQuery, Snowflake, Databricks (Unity Catalog), generic JDBC, GCP Dataplex, CSV, and query-log JSON** into one graph. This repo uses `DatabricksSchemaConnector`; swapping the source is a connector change, not a rewrite of the agent, the graph, or the MCP tools.
 

@@ -94,36 +94,9 @@ pattern: one hybrid-search call, one SQL call. Without it, 8–57 tool calls.
 
 ![Catalog map](../docs/query_history_compare.png)
 
-## Databricks Unity Catalog semantics vs Neo4j SL
+## One graph across warehouses
 
-Databricks ships its own semantic layer on Unity Catalog: **Metric Views**
-(certified measures + dimensions) and **Genie** (NL-to-SQL over a curated
-table set). Both are useful. They solve a **different problem** than this
-demo.
-
-This lakehouse has **264 tables**. In this workspace, a Genie / UC semantic
-space lets you attach at most **30 tables**. That is a hard cap, not a
-preference: you cannot point UC SL at the whole catalog. The 13 governed
-marts (`dm_agg_10` + `dm_fin_20`) plus the 18 ODS tables already total **31**
-— so even “gold + silver only, drop every landing/archive/decoy table” does
-not fit. The 191 landing/decoy tables are out of scope by construction.
-
-**When to use Databricks UC semantics**
-
-- The business already agrees on ~10–30 tables (a mart, a subject area).
-- You need one definition of ARR, NRR, bookings that BI, SQL, and Genie all  
-share — Metric Views.
-
-**When to use Neo4j SL (this repo)**
-
-- The catalog is **larger than the UC space cap** (here: 264 > 30).
-- Physical names do not match business language, and you cannot pre-list
-the right 30 tables without already knowing the answer.
-- Many near-duplicates (year shards, `x_feed_*`, HR/marketing homonyms)
-make “just pick gold” fail — you still have to *find* gold.
-- Text2SQL agents that would otherwise scan `information_schema` (the
-WITHOUT baseline in this repo).
-- The Neo4j / Neocarta layer is **warehouse-polyglot** — the same connector pattern ingests metadata from **BigQuery, Snowflake, Databricks (Unity Catalog), generic JDBC, GCP Dataplex, CSV, and query-log JSON** into one graph. This demo uses `DatabricksSchemaConnector`; swapping the source is a connector change, not a rewrite of the agent, the graph, or the MCP tools.
+The Neo4j / Neocarta layer is **warehouse-polyglot** — the same connector pattern ingests metadata from **BigQuery, Snowflake, Databricks (Unity Catalog), generic JDBC, GCP Dataplex, CSV, and query-log JSON** into one graph. This demo uses `DatabricksSchemaConnector`; swapping the source is a connector change, not a rewrite of the agent, the graph, or the MCP tools.
 
 This is not hypothetical: the companion
 [Census ACS BigQuery benchmark](https://github.com/mbabari/census-neocarta-benchmark)
@@ -131,18 +104,8 @@ runs the *identical* recipe against **BigQuery** (278 near-identical public
 tables), swapping only the connector. Same semantic layer, same MCP tools,
 different warehouse — evidence that the approach is source-agnostic.
 
-The same failure→success pattern shows up there. Below, `gpt-4o-mini` is asked
-for the 10 counties with the highest median household income (2018 5-year ACS).
-**WITHOUT** the layer (left) it loops over `list_census_tables` /
-`get_table_columns`, hits the 40-step limit, and gives up with **no answer after
-66,687 tokens**; **WITH** Neocarta (right) it answers correctly in **2 tool
-calls at 21,566 tokens (~68% fewer)**:
-
-![Census gpt-4o-mini: WITHOUT the semantic layer it hits the 40-step limit with no answer (66,687 tokens); WITH it, a correct answer in two tool calls (21,566 tokens)](../docs/census_terminal_without_vs_with.png)
-
-> Rule of thumb: reach for Neo4j when the answer lives in **more than one place**.
-> Unity Catalog governs one estate well; the graph is what lets a single agent
-> reason across all of them.
+> Rule of thumb: reach for Neo4j when the answer lives in **more than one place** —
+> the graph is what lets a single agent reason across all of your estates.
 
 ---
 
