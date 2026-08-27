@@ -611,6 +611,80 @@ def query_history_compare(path: Path | None = None) -> None:
     print(f"wrote {out}")
 
 
+def semantic_layer_overview() -> None:
+    """A semantic layer sits over many source types — not just databases."""
+    W = 14.2
+    fig, ax = plt.subplots(figsize=(W, 8.4), dpi=150)
+    ax.set_xlim(0, W)
+    ax.set_ylim(0, 8.4)
+    ax.axis("off")
+
+    ink, mute = "#222222", "#555555"
+    neo, neof = "#1e8449", "#eafaf1"
+    llm, llmf = "#1a5276", "#eaf2f8"
+    src, srcf = "#5d6d7e", "#f4f6f7"
+
+    ax.text(W / 2, 8.05, "A semantic layer sits over many sources — not just databases",
+            ha="center", fontsize=15.5, fontweight="bold", color=ink)
+    ax.text(W / 2, 7.68, "Only metadata is ingested — your data stays in the source.",
+            ha="center", fontsize=10.5, color=mute)
+
+    sources = [
+        ("Warehouses & Lakes", "BigQuery · Databricks\nSnowflake · Postgres"),
+        ("Data Catalogs", "Unity Catalog · Collibra\nAlation · Dataplex"),
+        ("Query Logs", "parsed join paths\n& usage patterns"),
+        ("Glossaries & Ontologies", "business terms,\nmetric defs, docs"),
+    ]
+    n = len(sources)
+    gap, margin = 0.4, 0.5
+    w = (W - 2 * margin - (n - 1) * gap) / n
+    y, h = 5.75, 1.35
+    centers = []
+    for i, (title, sub) in enumerate(sources):
+        x = margin + i * (w + gap)
+        _box(ax, x, y, w, h, srcf, src, lw=1.5)
+        cx = x + w / 2
+        centers.append(cx)
+        ax.text(cx, y + h - 0.34, title, ha="center", fontsize=10.5, fontweight="bold", color=src)
+        ax.text(cx, y + 0.44, sub, ha="center", fontsize=8.4, color=ink, va="center")
+
+    slw, slh = 5.6, 1.55
+    slx, sly = (W - slw) / 2, 3.15
+    _box(ax, slx, sly, slw, slh, neof, neo, lw=2.2)
+    ax.text(W / 2, sly + slh - 0.42, "Semantic Layer — Neo4j", ha="center",
+            fontsize=13.5, fontweight="bold", color=neo)
+    ax.text(W / 2, sly + 0.52,
+            "graph of metadata: tables, columns, joins,\nglossary terms + embeddings",
+            ha="center", fontsize=9.2, color=ink, va="center")
+
+    for i, cx in enumerate(centers):
+        tx = slx + slw * (i + 0.5) / n
+        _arrow(ax, cx, y - 0.03, tx, sly + slh + 0.03, src)
+    ax.text(W / 2, y - 0.42, "metadata", ha="center", fontsize=9,
+            fontstyle="italic", color=mute,
+            bbox=dict(boxstyle="round,pad=0.2", fc="white", ec="none"))
+
+    agw, agh = 3.4, 1.15
+    agx, agy = (W - agw) / 2, 0.75
+    _box(ax, agx, agy, agw, agh, llmf, llm, lw=2.0)
+    ax.text(W / 2, agy + agh / 2 + 0.1, "AI Agent", ha="center",
+            fontsize=12.5, fontweight="bold", color=llm)
+    ax.text(W / 2, agy + agh / 2 - 0.28, "Text2SQL · retrieval over MCP",
+            ha="center", fontsize=8.6, color=mute)
+    _arrow(ax, W / 2 - 0.5, sly - 0.03, W / 2 - 0.5, agy + agh + 0.03, neo)
+    _arrow(ax, W / 2 + 0.5, agy + agh + 0.03, W / 2 + 0.5, sly - 0.03, llm)
+    ax.text(W / 2 - 0.72, (sly + agy + agh) / 2, "context", ha="right",
+            fontsize=8.4, fontstyle="italic", color=neo)
+    ax.text(W / 2 + 0.72, (sly + agy + agh) / 2, "question", ha="left",
+            fontsize=8.4, fontstyle="italic", color=llm)
+
+    DOCS.mkdir(exist_ok=True)
+    out = DOCS / "semantic_layer_overview.png"
+    fig.savefig(out, bbox_inches="tight", facecolor="white")
+    plt.close(fig)
+    print(f"wrote {out}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--results", action="store_true", help="token + cost charts only")
@@ -618,7 +692,11 @@ def main() -> None:
     parser.add_argument("--flow", action="store_true", help="question-to-answer flow only")
     parser.add_argument("--graph", action="store_true", help="graph data model only")
     parser.add_argument("--querylog", action="store_true", help="query-history compare only")
+    parser.add_argument("--overview", action="store_true", help="semantic-layer sources overview only")
     args = parser.parse_args()
+    if args.overview:
+        semantic_layer_overview()
+        return
     if args.querylog:
         query_history_compare()
         return
@@ -632,6 +710,7 @@ def main() -> None:
         cost_chart()
         return
     if not args.results:
+        semantic_layer_overview()
         catalog_map(build_lakehouse())
         sl_flow()
         graph_model()

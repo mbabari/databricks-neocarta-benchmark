@@ -72,6 +72,12 @@ Unity Catalog **Metric Views + Genie** certify KPIs over a **curated** table lis
 
 Details in [findings](eval/findings.md#databricks-unity-catalog-semantics-vs-neo4j-sl).
 
+### One layer, any warehouse
+
+The Neo4j / Neocarta layer is **warehouse-polyglot** — the same connector pattern ingests metadata from **BigQuery, Snowflake, Databricks (Unity Catalog), generic JDBC, GCP Dataplex, CSV, and query-log JSON** into one graph. This repo uses `DatabricksSchemaConnector`; swapping the source is a connector change, not a rewrite of the agent, the graph, or the MCP tools.
+
+![Semantic layer architecture: metadata from any warehouse into one Neo4j graph, serving context to the agent](docs/simple-semantic-layer-architecture.png)
+
 ## Run it
 
 Python 3.12+, [uv](https://astral.sh/uv/), a Databricks **SQL warehouse** + PAT, Neo4j (Aura or Desktop), Anthropic and/or OpenAI keys.

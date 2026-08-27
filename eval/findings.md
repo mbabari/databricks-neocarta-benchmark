@@ -131,6 +131,15 @@ runs the *identical* recipe against **BigQuery** (278 near-identical public
 tables), swapping only the connector. Same semantic layer, same MCP tools,
 different warehouse — evidence that the approach is source-agnostic.
 
+The same failure→success pattern shows up there. Below, `gpt-4o-mini` is asked
+for the 10 counties with the highest median household income (2018 5-year ACS).
+**WITHOUT** the layer (left) it loops over `list_census_tables` /
+`get_table_columns`, hits the 40-step limit, and gives up with **no answer after
+66,687 tokens**; **WITH** Neocarta (right) it answers correctly in **2 tool
+calls at 21,566 tokens (~68% fewer)**:
+
+![Census gpt-4o-mini: WITHOUT the semantic layer it hits the 40-step limit with no answer (66,687 tokens); WITH it, a correct answer in two tool calls (21,566 tokens)](../docs/census_terminal_without_vs_with.png)
+
 > Rule of thumb: reach for Neo4j when the answer lives in **more than one place**.
 > Unity Catalog governs one estate well; the graph is what lets a single agent
 > reason across all of them.
