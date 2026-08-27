@@ -35,6 +35,8 @@ the retrieved physical names — it is not a Neo4j procedure.
 ANSWERS = the final answer contained the ground-truth values
 (deterministic regex check in `eval/questions.yaml`).
 
+
+
 ## Latest sweep
 
 The token and cost charts at the top of this page, and this section, are the current headline result:
@@ -90,6 +92,8 @@ replaces guessing.
 - **One retrieval, done.** With the layer every model converges to the same
 pattern: one hybrid-search call, one SQL call. Without it, 8–57 tool calls.
 
+![Catalog map](../docs/query_history_compare.png)
+
 ## Databricks Unity Catalog semantics vs Neo4j SL
 
 Databricks ships its own semantic layer on Unity Catalog: **Metric Views**
@@ -107,12 +111,10 @@ not fit. The 191 landing/decoy tables are out of scope by construction.
 **When to use Databricks UC semantics**
 
 - The business already agrees on ~10–30 tables (a mart, a subject area).
-- You need one definition of ARR, NRR, bookings that BI, SQL, and Genie all
+- You need one definition of ARR, NRR, bookings that BI, SQL, and Genie all  
 share — Metric Views.
-- Consumers are humans in a Genie space, not an agent walking an unknown
-catalog.
 
-**When to use Neo4j SL (this demo)**
+**When to use Neo4j SL (this repo)**
 
 - The catalog is **larger than the UC space cap** (here: 264 > 30).
 - Physical names do not match business language, and you cannot pre-list
@@ -122,8 +124,6 @@ make “just pick gold” fail — you still have to *find* gold.
 - Text2SQL agents that would otherwise scan `information_schema` (the
 WITHOUT baseline in this repo).
 - The Neo4j / Neocarta layer is **warehouse-polyglot** — the same connector pattern ingests metadata from **BigQuery, Snowflake, Databricks (Unity Catalog), generic JDBC, GCP Dataplex, CSV, and query-log JSON** into one graph. This demo uses `DatabricksSchemaConnector`; swapping the source is a connector change, not a rewrite of the agent, the graph, or the MCP tools.
-
-
 
 This is not hypothetical: the companion
 [Census ACS BigQuery benchmark](https://github.com/mbabari/census-neocarta-benchmark)
@@ -149,6 +149,8 @@ answers (regex-checked). Examples:
 2. 2024 EMEA ARR by product → `dm_fin_20.f_2001` (Platform Enterprise 324,000)
 3. Net revenue retention EMEA Dec 2024 → `dm_agg_10.a_1007` (1.08)
 4. Collections/dunning queue attempts → `dm_fin_20.f_2004` (9001×3, 9002×2)
+
+
 
 ## Reproduce
 
