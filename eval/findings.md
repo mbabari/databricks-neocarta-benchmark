@@ -63,8 +63,6 @@ The token and cost charts at the top of this page, and this section, are the cur
 
 ![Latency per question](../docs/benchmark_time.png)
 
-![Cost per question](../docs/benchmark_cost.png)
-
 ### Key findings
 
 - **Every model reaches 11/11 correct answers WITH the semantic layer.** Haiku
