@@ -4,11 +4,13 @@ Same models, same 11 questions, same [Databricks](https://www.databricks.com/) S
 
 The lakehouse is a **legacy-style Unity Catalog**: 12 schemas, **264 tables**, **5,614 columns**. Physical names are opaque (`ods_crm_01.t_0140`, `dm_fin_20.f_2001`). Business meaning lives only in `COMMENT` metadata. Dataclass counterpart of the [Census ACS BigQuery benchmark](https://github.com/mbabari/census-neocarta-benchmark).
 
-**Headline (8 Anthropic models × 11 questions):** every model scores **11/11** WITH the layer. Token cut **19–54%**, largest dollar save on expensive models (Opus 4.5: **~$1,527 → $693 / month** at 10k queries). Full tables, talking points, and Unity Catalog vs Neo4j: **[eval/findings.md](eval/findings.md)**.
+**Headline (8 Anthropic models × 11 questions):** every model scores **11/11** WITH the layer. Token cut **19–54%** and **~2× faster**, largest dollar save on expensive models (Opus 4.5: **~$1,527 → $693 / month** at 10k queries). Full tables, talking points, and Unity Catalog vs Neo4j: **[eval/findings.md](eval/findings.md)**.
 
 ![Tokens per question](docs/benchmark_results.png)
 
 ![Cost per question](docs/benchmark_cost.png)
+
+![Latency per question](docs/benchmark_time.png)
 
 ## The lakehouse
 

@@ -242,6 +242,30 @@ def cost_chart() -> None:
     print(f"wrote {out}")
 
 
+def time_chart() -> None:
+    rows, models = _load_eval_rows()
+
+    fig, ax = plt.subplots(figsize=(max(13, 1.9 * len(models)), 6.8), dpi=150)
+    _grouped_mode_bars(ax, rows, models, "secs", lambda v: f"{v:.1f}s")
+
+    ax.set_xticks(list(range(len(models))))
+    ax.set_xticklabels(models, fontsize=10, rotation=15, ha="right")
+    ax.set_ylabel("avg seconds per question")
+    ax.set_title(
+        "Text2SQL over a 264-table legacy lakehouse — latency, saving %, and correct answers",
+        fontsize=13, fontweight="bold",
+    )
+    ax.legend(fontsize=11)
+    ax.spines[["top", "right"]].set_visible(False)
+    ax.margins(y=0.28)
+
+    DOCS.mkdir(exist_ok=True)
+    out = DOCS / "benchmark_time.png"
+    fig.savefig(out, bbox_inches="tight", facecolor="white")
+    plt.close(fig)
+    print(f"wrote {out}")
+
+
 def _box(ax, x, y, w, h, face, edge, lw=1.6, radius=0.08):
     ax.add_patch(
         FancyBboxPatch(
@@ -689,6 +713,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--results", action="store_true", help="token + cost charts only")
     parser.add_argument("--cost", action="store_true", help="cost chart only")
+    parser.add_argument("--time", action="store_true", help="latency chart only")
     parser.add_argument("--flow", action="store_true", help="question-to-answer flow only")
     parser.add_argument("--graph", action="store_true", help="graph data model only")
     parser.add_argument("--querylog", action="store_true", help="query-history compare only")
@@ -709,6 +734,9 @@ def main() -> None:
     if args.cost:
         cost_chart()
         return
+    if args.time:
+        time_chart()
+        return
     if not args.results:
         semantic_layer_overview()
         catalog_map(build_lakehouse())
@@ -719,6 +747,7 @@ def main() -> None:
     if _eval_results_path().exists():
         results_chart()
         cost_chart()
+        time_chart()
 
 
 if __name__ == "__main__":

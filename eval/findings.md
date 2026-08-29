@@ -61,6 +61,8 @@ The token and cost charts at the top of this page, and this section, are the cur
 | claude-fable-5    | 17,210  | 13,960   | **19%** | 37.5s       | 21.9s        | 11/11          | **11/11**       |
 
 
+![Latency per question](../docs/benchmark_time.png)
+
 ![Cost per question](../docs/benchmark_cost.png)
 
 ### Key findings
