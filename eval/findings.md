@@ -1,9 +1,5 @@
 # Databricks lakehouse demo — Neo4j semantic layer (Neocarta) findings
 
-![Tokens per question](../docs/benchmark_results.png)
-
-![Cost per question](../docs/benchmark_cost.png)
-
 ## The setup
 
 ![Catalog map](../docs/catalog_map.png)
@@ -39,7 +35,7 @@ ANSWERS = the final answer contained the ground-truth values
 
 ## Latest sweep
 
-The token and cost charts at the top of this page, and this section, are the current headline result:
+The table and charts below are the current headline result:
 **8 models × 11 questions × 2 modes**
 (`eval/results-8models-anthropic.json`). Two changes vs the earlier run:
 
@@ -60,6 +56,10 @@ The token and cost charts at the top of this page, and this section, are the cur
 | claude-opus-5     | 27,079  | 14,056   | **48%** | 27.8s       | 8.8s         | 11/11          | **11/11**       |
 | claude-fable-5    | 17,210  | 13,960   | **19%** | 37.5s       | 21.9s        | 11/11          | **11/11**       |
 
+
+![Tokens per question](../docs/benchmark_results.png)
+
+![Cost per question](../docs/benchmark_cost.png)
 
 ![Latency per question](../docs/benchmark_time.png)
 
