@@ -6,12 +6,6 @@ The lakehouse is a **legacy-style Unity Catalog**: 12 schemas, **264 tables**, *
 
 **Headline (8 Anthropic models × 11 questions):** every model scores **11/11** WITH the layer. Token cut **19–54%** and **~2× faster**, largest dollar save on expensive models (Opus 4.5: **~$1,527 → $693 / month** at 10k queries). Full tables, talking points, and Unity Catalog vs Neo4j: **[eval/findings.md](eval/findings.md)**.
 
-![Tokens per question](docs/benchmark_results.png)
-
-![Cost per question](docs/benchmark_cost.png)
-
-![Latency per question](docs/benchmark_time.png)
-
 ## The lakehouse
 
 ![Catalog map](docs/catalog_map.png)
@@ -63,6 +57,12 @@ Latest sweep: 8 Anthropic models, 11 questions, local embeddings (`eval/results-
 | claude-opus-5     | 27,079     | 14,056      | 48%  | $0.158  | $0.080   | 11/11       | **11/11**    |
 | claude-fable-5    | 17,210     | 13,960      | 19%  | $0.203  | $0.158   | 11/11       | **11/11**    |
 
+
+![Tokens per question](docs/benchmark_results.png)
+
+![Cost per question](docs/benchmark_cost.png)
+
+![Latency per question](docs/benchmark_time.png)
 
 Scoring is deterministic: `[eval/questions.yaml](eval/questions.yaml)` has `expected_tables` and `expected_answer` regexes. Write-up: **[eval/findings.md](eval/findings.md)**.
 
